@@ -1,86 +1,70 @@
 import { useState } from "react";
 
-interface BookingFormProps {
-  venueId: string;
-}
+const API_BASE = "https://v2.api.noroff.dev";
+const API_KEY = "2ae3e868-69f2-430f-b7cb-5f7d53949d57";
 
-export function BookingForm({ venueId }: BookingFormProps) {
+export function BookingForm({ venueId }: { venueId: string }) {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [guests, setGuests] = useState(1);
-  const [message, setMessage] = useState("");
-
-  const token = localStorage.getItem("holidaze_token");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    try {
-      const response = await fetch(
-        "https://v2.api.noroff.dev/holidaze/bookings",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            dateFrom,
-            dateTo,
-            guests,
-            venueId,
-          }),
-        }
-      );
+    const token = localStorage.getItem("holidaze_token");
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.errors?.[0]?.message || "Booking failed");
-      }
-
-      setMessage("Booking successful 🎉");
-    } catch (error: any) {
-      setMessage(error.message);
+    if (!token) {
+      alert("You must be logged in");
+      return;
     }
+
+    const response = await fetch(`${API_BASE}/holidaze/bookings`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        "X-Noroff-API-Key": API_KEY,
+      },
+      body: JSON.stringify({
+        dateFrom,
+        dateTo,
+        guests,
+        venueId,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(data);
+      alert(data.errors?.[0]?.message || "Booking failed");
+      return;
+    }
+
+    alert("Booking successful 🎉");
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-      <h2 className="text-xl font-semibold">Book This Venue</h2>
-
+    <form onSubmit={handleSubmit} className="space-y-3">
       <input
         type="date"
         value={dateFrom}
         onChange={(e) => setDateFrom(e.target.value)}
         required
-        className="w-full p-2 rounded bg-stone-800"
       />
-
       <input
         type="date"
         value={dateTo}
         onChange={(e) => setDateTo(e.target.value)}
         required
-        className="w-full p-2 rounded bg-stone-800"
       />
-
       <input
         type="number"
+        min={1}
         value={guests}
-        min="1"
         onChange={(e) => setGuests(Number(e.target.value))}
-        className="w-full p-2 rounded bg-stone-800"
       />
-
-      <button
-        type="submit"
-        className="bg-amber-500 hover:bg-amber-600 px-4 py-2 rounded font-semibold"
-      >
-        Book Now
-      </button>
-
-      {message && <p className="mt-4 text-sm">{message}</p>}
+      <button type="submit">Book</button>
     </form>
   );
 }

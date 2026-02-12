@@ -1,6 +1,7 @@
-const BASE_URL = "https://v2.api.noroff.dev";
+const API_BASE = "https://v2.api.noroff.dev";
+const API_KEY = "2ae3e868-69f2-430f-b7cb-5f7d53949d57";
 
-export async function apiRequest(
+export async function fetchFromApi(
   endpoint: string,
   options: RequestInit = {}
 ) {
@@ -8,6 +9,7 @@ export async function apiRequest(
 
   const headers: HeadersInit = {
     "Content-Type": "application/json",
+    "X-Noroff-API-Key": API_KEY,
     ...options.headers,
   };
 
@@ -15,7 +17,7 @@ export async function apiRequest(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
+  const response = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
     headers,
   });
@@ -23,8 +25,9 @@ export async function apiRequest(
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.errors?.[0]?.message || "Something went wrong");
+    console.error("API Error:", data);
+    throw new Error(data?.errors?.[0]?.message || "API request failed");
   }
 
-  return data.data;
+  return data;
 }

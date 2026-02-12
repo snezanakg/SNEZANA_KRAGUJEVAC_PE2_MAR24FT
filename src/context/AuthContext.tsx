@@ -1,17 +1,12 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
-import { apiRequest } from "../utils/api";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+
+const API_BASE = "https://v2.api.noroff.dev";
 
 interface User {
   name: string;
   email: string;
-  avatar?: string;
   venueManager: boolean;
+  accessToken: string;
 }
 
 interface AuthContextType {
@@ -31,56 +26,68 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("holidaze_user");
-    const storedToken = localStorage.getItem("holidaze_token");
-
-    if (storedUser && storedToken) {
+    if (storedUser) {
       setUser(JSON.parse(storedUser));
-      setIsAuthenticated(true);
     }
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const data = await apiRequest("/auth/login", {
+  const isAuthenticated = !!user;
+
+  async function login(email: string, password: string) {
+    const response = await fetch(`${API_BASE}/auth/login?_holidaze=true`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
 
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.errors?.[0]?.message || "Login failed");
+    }
+
     const userData: User = {
-      name: data.name,
-      email: data.email,
-      avatar: data.avatar?.url || "",
-      venueManager: data.venueManager,
+      name: data.data.name,
+      email: data.data.email,
+      venueManager: data.data.venueManager,
+      accessToken: data.data.accessToken,
     };
 
     localStorage.setItem("holidaze_user", JSON.stringify(userData));
-    localStorage.setItem("holidaze_token", data.accessToken);
+    localStorage.setItem("holidaze_token", userData.accessToken);
 
     setUser(userData);
-    setIsAuthenticated(true);
-  };
+  }
 
-  const register = async (
+  async function register(
     name: string,
     email: string,
     password: string,
     venueManager: boolean
-  ) => {
-    await apiRequest("/auth/register", {
+  ) {
+    const response = await fetch(`${API_BASE}/auth/register?_holidaze=true`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, password, venueManager }),
     });
-  };
 
-  const logout = () => {
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.errors?.[0]?.message || "Registration failed");
+    }
+
+    await login(email, password);
+  }
+
+  function logout() {
     localStorage.removeItem("holidaze_user");
     localStorage.removeItem("holidaze_token");
     setUser(null);
-    setIsAuthenticated(false);
-  };
+  }
 
   return (
     <AuthContext.Provider
@@ -93,8 +100,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used inside AuthProvider");
-  }
+  if (!context) throw new Error("useAuth must be used within AuthProvider");
   return context;
 }
