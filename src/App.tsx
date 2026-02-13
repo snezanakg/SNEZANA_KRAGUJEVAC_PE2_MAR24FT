@@ -1,30 +1,36 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import { Header } from './components/Header';
-import { Footer } from './components/Footer';
-import { HomePage } from './pages/HomePage';
-import { VenuePage } from './pages/VenuePage';
-import LoginPage from './pages/LoginPage';
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
 
-import { RegisterPage } from './pages/RegisterPage';
-import { ProfilePage } from './pages/ProfilePage';
-import { BookingsPage } from './pages/BookingsPage';
-import { VenueManagerPage } from './pages/VenueManagerPage';
-import ProtectedRoute from './components/ProtectedRoute';
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+import ProtectedRoute from "./components/ProtectedRoute";
+
+import HomePage from "./pages/HomePage";
+import VenuePage from "./pages/VenuePage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import ProfilePage from "./pages/ProfilePage";
+import BookingsPage from "./pages/BookingsPage";
+import VenueManagerPage from "./pages/VenueManagerPage";
 
 export default function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="min-h-screen bg-gray-950 flex flex-col">
+        <div className="min-h-screen bg-stone-950 flex flex-col">
+          
           <Header />
+
           <main className="flex-1">
             <Routes>
+              
+              {/* Public Routes */}
               <Route path="/" element={<HomePage />} />
               <Route path="/venue/:id" element={<VenuePage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+
+              {/* Protected Routes */}
               <Route
                 path="/profile"
                 element={
@@ -33,6 +39,7 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+
               <Route
                 path="/bookings"
                 element={
@@ -41,6 +48,7 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+
               <Route
                 path="/manage-venues"
                 element={
@@ -49,10 +57,15 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+
+              {/* Fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
+
             </Routes>
           </main>
+
           <Footer />
+
         </div>
       </AuthProvider>
     </Router>

@@ -6,18 +6,18 @@ interface Venue {
   id: string;
   name: string;
   description: string;
-  media: { url: string }[];
+  media?: { url: string; alt?: string }[];
   price: number;
   rating: number;
   maxGuests: number;
-  location: {
-    address: string;
-    city: string;
-    country: string;
+  location?: {
+    address?: string;
+    city?: string;
+    country?: string;
   };
 }
 
-export function VenuePage() {
+export default function VenuePage() {
   const { id } = useParams();
 
   const [venue, setVenue] = useState<Venue | null>(null);
@@ -36,7 +36,9 @@ export function VenuePage() {
         const json = await response.json();
 
         if (!response.ok) {
-          throw new Error(json.errors?.[0]?.message || "Failed to fetch venue");
+          throw new Error(
+            json.errors?.[0]?.message || "Failed to fetch venue"
+          );
         }
 
         setVenue(json.data);
@@ -53,15 +55,27 @@ export function VenuePage() {
   }, [id]);
 
   if (loading) {
-    return <p className="text-center mt-20 text-stone-400">Loading venue...</p>;
+    return (
+      <p className="text-center mt-20 text-stone-400">
+        Loading venue...
+      </p>
+    );
   }
 
   if (error) {
-    return <p className="text-center mt-20 text-red-500">{error}</p>;
+    return (
+      <p className="text-center mt-20 text-red-500">
+        {error}
+      </p>
+    );
   }
 
   if (!venue) {
-    return <p className="text-center mt-20">Venue not found.</p>;
+    return (
+      <p className="text-center mt-20">
+        Venue not found.
+      </p>
+    );
   }
 
   return (
@@ -75,15 +89,21 @@ export function VenuePage() {
 
       {/* INFO */}
       <div className="mt-8">
-        <h1 className="text-4xl font-bold text-white">{venue.name}</h1>
+        <h1 className="text-4xl font-bold text-white">
+          {venue.name}
+        </h1>
 
         <p className="text-stone-400 mt-2">
           📍 {venue.location?.city}, {venue.location?.country}
         </p>
 
         <div className="mt-4 flex flex-wrap gap-6 text-sm">
-          <span className="text-yellow-400">⭐ {venue.rating}</span>
-          <span>👥 Max Guests: {venue.maxGuests}</span>
+          <span className="text-yellow-400">
+            ⭐ {venue.rating}
+          </span>
+          <span>
+            👥 Max Guests: {venue.maxGuests}
+          </span>
           <span className="text-amber-400 font-semibold text-lg">
             ${venue.price} / night
           </span>

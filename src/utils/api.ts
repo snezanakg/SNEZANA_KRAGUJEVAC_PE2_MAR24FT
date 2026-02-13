@@ -1,7 +1,9 @@
 export const API_BASE = "https://v2.api.noroff.dev";
-const API_KEY = "2ae3e868-69f2-430f-b7cb-5f7d53949d57";
 
-export async function fetchFromApi(endpoint: string, options: RequestInit = {}) {
+export async function fetchFromApi(
+  endpoint: string,
+  options: RequestInit = {}
+) {
   const token = localStorage.getItem("holidaze_token");
 
   const headers: HeadersInit = {

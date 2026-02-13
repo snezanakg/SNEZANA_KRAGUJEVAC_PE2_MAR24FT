@@ -1,15 +1,18 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { API_BASE } from "../utils/api";
+import { createContext, useContext, useState, useEffect } from "react";
+import { fetchFromApi } from "../utils/api";
 
 interface User {
   name: string;
   email: string;
   venueManager: boolean;
-  accessToken: string;
+  avatar?: {
+    url: string;
+  };
 }
 
 interface AuthContextType {
   user: User | null;
+  isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (
     name: string,
@@ -18,34 +21,35 @@ interface AuthContextType {
     venueManager: boolean
   ) => Promise<void>;
   logout: () => void;
+  updateAvatar: (url: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("holidaze_user");
-    if (stored) setUser(JSON.parse(stored));
+    const storedUser = localStorage.getItem("holidaze_user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
   }, []);
 
+  const isAuthenticated = !!user;
+
   async function login(email: string, password: string) {
-    const res = await fetch(`${API_BASE}/auth/login?_holidaze=true`, {
+    const data = await fetchFromApi("/auth/login?_holidaze=true", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
 
-    const data = await res.json();
+    const { accessToken, ...userData } = data.data;
 
-    if (!res.ok) {
-      throw new Error(data.errors?.[0]?.message || "Login failed");
-    }
+    localStorage.setItem("holidaze_token", accessToken);
+    localStorage.setItem("holidaze_user", JSON.stringify(userData));
 
-    localStorage.setItem("holidaze_token", data.data.accessToken);
-    localStorage.setItem("holidaze_user", JSON.stringify(data.data));
-    setUser(data.data);
+    setUser(userData);
   }
 
   async function register(
@@ -54,28 +58,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
     venueManager: boolean
   ) {
-    const res = await fetch(`${API_BASE}/auth/register?_holidaze=true`, {
+    await fetchFromApi("/auth/register?_holidaze=true", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password, venueManager }),
+      body: JSON.stringify({
+        name,
+        email,
+        password,
+        venueManager,
+      }),
     });
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.errors?.[0]?.message || "Register failed");
-    }
-
+    // auto login after register
     await login(email, password);
   }
 
+  async function updateAvatar(url: string) {
+    if (!user) return;
+
+    const data = await fetchFromApi(
+      `/holidaze/profiles/${user.name}`,
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          avatar: { url },
+        }),
+      }
+    );
+
+    const updatedUser = data.data;
+
+    localStorage.setItem("holidaze_user", JSON.stringify(updatedUser));
+    setUser(updatedUser);
+  }
+
   function logout() {
-    localStorage.clear();
+    localStorage.removeItem("holidaze_token");
+    localStorage.removeItem("holidaze_user");
     setUser(null);
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated,
+        login,
+        register,
+        logout,
+        updateAvatar,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -83,6 +115,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be inside AuthProvider");
+  if (!context) {
+    throw new Error("useAuth must be used inside AuthProvider");
+  }
   return context;
 }
