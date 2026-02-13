@@ -1,9 +1,6 @@
 [build]
-  command = "npm ci && chmod +x node_modules/.bin/vite || true && npm run build"
+  command = "npm run build"
   publish = "dist"
-
-[build.environment]
-  NODE_VERSION = "18"
 
 [[redirects]]
   from = "/*"

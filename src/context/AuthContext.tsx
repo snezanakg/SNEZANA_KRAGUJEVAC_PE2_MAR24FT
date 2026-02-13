@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-
-const API_BASE = "https://v2.api.noroff.dev";
+import { API_BASE } from "../utils/api";
 
 interface User {
   name: string;
@@ -11,7 +10,6 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (
     name: string,
@@ -28,38 +26,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("holidaze_user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    const stored = localStorage.getItem("holidaze_user");
+    if (stored) setUser(JSON.parse(stored));
   }, []);
 
-  const isAuthenticated = !!user;
-
   async function login(email: string, password: string) {
-    const response = await fetch(`${API_BASE}/auth/login?_holidaze=true`, {
+    const res = await fetch(`${API_BASE}/auth/login?_holidaze=true`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
 
-    const data = await response.json();
+    const data = await res.json();
 
-    if (!response.ok) {
+    if (!res.ok) {
       throw new Error(data.errors?.[0]?.message || "Login failed");
     }
 
-    const userData: User = {
-      name: data.data.name,
-      email: data.data.email,
-      venueManager: data.data.venueManager,
-      accessToken: data.data.accessToken,
-    };
-
-    localStorage.setItem("holidaze_user", JSON.stringify(userData));
-    localStorage.setItem("holidaze_token", userData.accessToken);
-
-    setUser(userData);
+    localStorage.setItem("holidaze_token", data.data.accessToken);
+    localStorage.setItem("holidaze_user", JSON.stringify(data.data));
+    setUser(data.data);
   }
 
   async function register(
@@ -68,31 +54,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
     venueManager: boolean
   ) {
-    const response = await fetch(`${API_BASE}/auth/register?_holidaze=true`, {
+    const res = await fetch(`${API_BASE}/auth/register?_holidaze=true`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, password, venueManager }),
     });
 
-    const data = await response.json();
+    const data = await res.json();
 
-    if (!response.ok) {
-      throw new Error(data.errors?.[0]?.message || "Registration failed");
+    if (!res.ok) {
+      throw new Error(data.errors?.[0]?.message || "Register failed");
     }
 
     await login(email, password);
   }
 
   function logout() {
-    localStorage.removeItem("holidaze_user");
-    localStorage.removeItem("holidaze_token");
+    localStorage.clear();
     setUser(null);
   }
 
   return (
-    <AuthContext.Provider
-      value={{ user, isAuthenticated, login, register, logout }}
-    >
+    <AuthContext.Provider value={{ user, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
@@ -100,6 +83,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within AuthProvider");
+  if (!context) throw new Error("useAuth must be inside AuthProvider");
   return context;
 }

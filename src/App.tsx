@@ -5,12 +5,13 @@ import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { HomePage } from './pages/HomePage';
 import { VenuePage } from './pages/VenuePage';
-import { LoginPage } from './pages/LoginPage';
+import LoginPage from './pages/LoginPage';
+
 import { RegisterPage } from './pages/RegisterPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { BookingsPage } from './pages/BookingsPage';
 import { VenueManagerPage } from './pages/VenueManagerPage';
-import { ProtectedRoute } from './components/ProtectedRoute';
+import ProtectedRoute from './components/ProtectedRoute';
 
 export default function App() {
   return (

@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
-export function LoginPage() {
+export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -14,44 +14,55 @@ export function LoginPage() {
     e.preventDefault();
     try {
       await login(email, password);
-      navigate("/profile"); // IMPORTANT
+      navigate("/");
     } catch (err: any) {
       setError(err.message);
     }
   }
 
   return (
-    <div className="max-w-md mx-auto mt-20">
-      <h1 className="text-2xl mb-4">Login</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">
 
-      {error && <p className="text-red-500 mb-2">{error}</p>}
+        <h2 className="text-3xl font-bold text-center mb-6">
+          Welcome Back
+        </h2>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="p-2 border"
-          required
-        />
+        {error && (
+          <p className="text-red-500 text-sm mb-4 text-center">
+            {error}
+          </p>
+        )}
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="p-2 border"
-          required
-        />
+        <form onSubmit={handleSubmit} className="space-y-4">
 
-        <button
-          type="submit"
-          className="bg-black text-white p-2"
-        >
-          Login
-        </button>
-      </form>
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-md bg-white text-black focus:outline-none focus:ring-2 focus:ring-orange-500"
+            required
+          />
+
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-md bg-white text-black focus:outline-none focus:ring-2 focus:ring-orange-500"
+            required
+          />
+
+          <button
+            type="submit"
+            className="w-full bg-orange-500 text-white py-3 rounded-md font-semibold hover:bg-orange-600 transition"
+          >
+            Login
+          </button>
+
+        </form>
+      </div>
     </div>
   );
 }
