@@ -1,5 +1,5 @@
 [build]
-  command = "npm install --include=dev && npx vite build"
+  command = "npm ci && chmod +x node_modules/.bin/vite || true && npm run build"
   publish = "dist"
 
 [build.environment]
